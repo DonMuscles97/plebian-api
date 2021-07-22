@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Validator;
 
 class RegisterController extends Controller
 {
@@ -26,16 +27,29 @@ class RegisterController extends Controller
      */
     public function store(Request $request)
     {
-        $content = $request->getContent();
-        $content = json_decode($content);
-        $content = $content->user;
+        
+        $content = $request->all()['user'];
+       
+
+        $validator = Validator::make($content, [
+            'username'  => 'required|unique:users|max:255',
+            'email'     => 'required|email',
+            'password'  =>  'required'
+        ]);
+
+        if ($validator->fails()) {
+            $error = ['error' => $validator->errors()->first()];
+
+            return response()->json($error);
+                        
+        }
         
         $user = new User();
-        $user->username = $content->username;
-        $user->email = $content->email;
-        $user->password = $content->password;
+        $user->username = $content['username'];
+        $user->email = $content['email'];
+        $user->password = $content['password'];
         $user->save();
-         return response()->json($user);
+         return response()->json($content);
     }
 
     /**
